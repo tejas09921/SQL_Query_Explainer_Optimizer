@@ -1,4 +1,6 @@
 .git
 target
+frontend/node_modules
+frontend/dist
 sql-explainer-history*
 *.log
