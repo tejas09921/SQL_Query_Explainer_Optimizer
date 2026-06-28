@@ -16,6 +16,8 @@ import {
 import "./styles.css";
 
 const API_BASE = "";
+const isHostedApp = typeof window !== "undefined"
+  && !["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 const demoRequest = {
   connection: {
@@ -31,10 +33,21 @@ const demoRequest = {
   includeBuffers: true
 };
 
+const hostedRequest = {
+  ...demoRequest,
+  connection: {
+    ...demoRequest.connection,
+    host: "",
+    database: "",
+    username: "",
+    password: ""
+  }
+};
+
 const emptyResult = null;
 
 function App() {
-  const [form, setForm] = useState(demoRequest);
+  const [form, setForm] = useState(isHostedApp ? hostedRequest : demoRequest);
   const [result, setResult] = useState(emptyResult);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +84,11 @@ function App() {
     event.preventDefault();
     setLoading(true);
     setError("");
+    if (isHostedApp && isLocalDatabaseHost(form.connection.host)) {
+      setLoading(false);
+      setError("This live Render app cannot connect to localhost. Use a public Postgres host such as Render Postgres, Neon, Supabase, Railway, or run this project locally with Docker.");
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE}/api/v1/analyze`, {
         method: "POST",
@@ -149,10 +167,20 @@ function App() {
               <h1>Analyze Query</h1>
               <p>Connect to a Postgres database and inspect the execution plan.</p>
             </div>
-            <button className="iconButton" type="button" onClick={() => setForm(demoRequest)} title="Reset demo values">
+            <button className="iconButton" type="button" onClick={() => setForm(demoRequest)} title="Load local demo values">
               <RefreshCw size={18} />
             </button>
           </div>
+
+          {isHostedApp && (
+            <div className="infoBox">
+              <AlertTriangle size={18} />
+              <span>
+                Live Render var localhost chalnar nahi. Ithe public Postgres host vapra.
+                Local demo sathi repo clone karun Docker DB sah app local machine var run kara.
+              </span>
+            </div>
+          )}
 
           <div className="connectionGrid">
             <Field label="Host" value={form.connection.host} onChange={(value) => updateConnection("host", value)} />
@@ -340,7 +368,7 @@ function PlanNode({ node }) {
       <div className="planLine">
         <strong>{node.nodeType}</strong>
         {node.relationName && <span>{node.relationName}</span>}
-        <small>{formatMs(node.actualTotalTime)} · {node.percentOfTotalTime?.toFixed?.(1) || "0.0"}%</small>
+        <small>{formatMs(node.actualTotalTime)} - {node.percentOfTotalTime?.toFixed?.(1) || "0.0"}%</small>
       </div>
       {node.filter && <code>{node.filter}</code>}
       {(node.children || []).map((child, index) => (
@@ -353,6 +381,11 @@ function PlanNode({ node }) {
 function formatMs(value) {
   const number = Number(value || 0);
   return `${number.toFixed(number >= 10 ? 1 : 2)} ms`;
+}
+
+function isLocalDatabaseHost(host) {
+  const normalized = String(host || "").trim().toLowerCase();
+  return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1";
 }
 
 createRoot(document.getElementById("root")).render(<App />);

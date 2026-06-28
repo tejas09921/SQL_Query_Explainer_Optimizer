@@ -216,6 +216,19 @@ textarea {
   border-radius: 8px;
 }
 
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #b7d2e7;
+  background: #edf7ff;
+  color: #285171;
+  border-radius: 8px;
+  line-height: 1.45;
+}
+
 .historyList,
 .bottleneckList,
 .suggestionList,
