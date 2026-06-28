@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,6 +27,12 @@ public class GlobalExceptionHandler {
                 .toList();
         return ResponseEntity.badRequest()
                 .body(new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), String.join("; ", errors)));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(Instant.now(), HttpStatus.NOT_FOUND.value(), "Route not found."));
     }
 
     @ExceptionHandler(Exception.class)
